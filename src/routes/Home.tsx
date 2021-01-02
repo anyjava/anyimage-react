@@ -1,87 +1,107 @@
 import React from 'react';
 import axios from "axios";
 import Movie from "../components/Movie";
+import ImageView from "../components/ImageView";
 import "./Home.css";
 
-import { Theme, createStyles, makeStyles, withStyles, WithStyles } from '@material-ui/core/styles';
-import GridList from '@material-ui/core/GridList';
-import GridListTile from '@material-ui/core/GridListTile';
-import GridListTileBar from '@material-ui/core/GridListTileBar';
-import ListSubheader from '@material-ui/core/ListSubheader';
-import IconButton from '@material-ui/core/IconButton';
-import InfoIcon from '@material-ui/icons/Info';
+import { Link } from "react-router-dom";
+import Col from 'react-bootstrap/Col';
+import Row from 'react-bootstrap/Row';
+import Card from 'react-bootstrap/Card';
+import Button from 'react-bootstrap/Button';
+import Spinner from 'react-bootstrap/Spinner'
 
 interface State {
   isLoading: boolean;
+  page: number;
   movies: Array<any>;
 }
 
-const useStyles = createStyles({
-    root: {
-      display: 'flex',
-      flexWrap: 'wrap',
-      justifyContent: 'space-around',
-      overflow: 'hidden',
-      // backgroundColor: theme.palette.background.paper,
-    },
-    gridList: {
-      width: "100%",
-      height: "100%",
-    },
-    icon: {
-      color: 'rgba(255, 255, 255, 0.54)',
-    },
-  });
 
-
-class Home extends React.Component<WithStyles, State> {
+class Home extends React.Component<{}, State> {
 
   state: State = {
     isLoading: true,
+    page: 0,
     movies: []
   };
 
   async componentDidMount() {
-    const { data: { content } } = await axios.get("http://scrap.api.anyjava.net:8080/articles?size=20&page=0")
+    const { page } = this.state;
+    const { data: { content } } = await axios.get("http://scrap.api.anyjava.net:8080/articles?size=20&page=" + page)
     this.setState({ movies: content, isLoading: false })
+
+    document.addEventListener('scroll', this.trackScrolling);
+  }
+
+  componentDidUpdate() {
+    console.log('updated...');
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('scroll', this.trackScrolling);
+  }
+
+  trackScrolling = () => {
+    const wrappedElement: (HTMLElement | null) = document.getElementById('container0');
+    if (this.isBottom(wrappedElement)) {
+      console.log('header bottom reached');
+      this.appendPage();
+      document.removeEventListener('scroll', this.trackScrolling);
+    }
+  }
+
+  async appendPage() {
+    this.state.page += 1;
+    this.setState({isLoading: true})
+    const { data: { content } } = await axios.get(process.env.REACT_APP_HOST_API + "/articles?size=20&page=" + this.state.page)
+    this.setState({ movies: this.state.movies.concat(content), isLoading: false})
+    document.addEventListener('scroll', this.trackScrolling);
+  }
+
+  isBottom(el: (HTMLElement | null)) {
+    if (el === null || el === undefined) return false;
+    console.log('isBottome ' + Math.abs(el.getBoundingClientRect().bottom) + " / " + window.innerHeight);
+    return el.getBoundingClientRect().bottom - window.innerHeight < 1;
   }
 
   render() {
-    const { isLoading, movies} = this.state;
-    const { classes } = this.props;
+    const { isLoading, movies } = this.state;
     return (
       <main>
-        {isLoading ? (
-          <div className="loader">
-            <span className="loader__text"> "Loading..." </span>
-          </div>
-        ) : (
 
-            <div className={classes.root}>
-              <GridList cellHeight={180} className={classes.gridList}>
-                <GridListTile key="Subheader" cols={2} style={{ height: 'auto' }}>
-                  <ListSubheader component="div">December</ListSubheader>
-                </GridListTile>
-                {movies.map((tile) => (
-                  <GridListTile key={tile.id}>
-                    <img src={`https://img.anyjava.net/upload/${tile.images[0].url}`} alt={tile.subject} />
-                    <GridListTileBar
-                      title={tile.subject}
-                      subtitle={<span>Hit: {tile.hit}</span>}
-                      actionIcon={
-                        <IconButton aria-label={`info about ${tile.subject}`} className={classes.icon}>
-                          <InfoIcon />
-                        </IconButton>
-                      }
-                    />
-                  </GridListTile>
-                ))}
-              </GridList>
+        <div>
+          <Row>
+
+            {movies.map((tile) => (
+
+              <div style={{ margin: '10px' }}>
+                <Col sm={6} md={4}>
+                  <Card style={{ width: '18rem' }}>
+                    <Card.Body>
+                      <Card.Title>{tile.subject}</Card.Title>
+                      <a href={"https://clien.net" + tile.url}>
+                        <Button variant="primary" size="sm">원본글</Button>
+                      </a>
+                    </Card.Body>
+                    <ImageView images={tile.images}/>
+                  </Card>
+                </Col>
+              </div>
+            ))}
+          </Row>
+          {isLoading &&
+            <div className="loader">
+              <Spinner animation="border" role="status">
+                <span className="sr-only">Loading...</span>
+              </Spinner>
             </div>
-          )}
+          }
+        </div>
+
       </main>
     );
   }
 }
 
-export default withStyles(useStyles)(Home);
+export default Home;
