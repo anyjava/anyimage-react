@@ -27,8 +27,9 @@ class Home extends React.Component<{}, State> {
   };
 
   async componentDidMount() {
+    console.log(">>>>>" + process.env.REACT_APP_HOST_API);
     const { page } = this.state;
-    const { data: { content } } = await axios.get("http://scrap.api.anyjava.net:8080/articles?size=20&page=" + page)
+    const { data: { content } } = await axios.get(process.env.REACT_APP_HOST_API + "/articles?size=20&page=" + page)
     this.setState({ movies: content, isLoading: false })
 
     document.addEventListener('scroll', this.trackScrolling);

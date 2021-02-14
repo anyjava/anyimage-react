@@ -47,9 +47,24 @@ class ImageView extends React.Component<ImagesProps, ImagesState> {
   }
 
   render() {
+    const image = this.props.images[this.state.currentImageIndex];
     return (
       <div>
-        <Card.Img as={Image} fluid={true} className="img-fluid" variant="top" src={`https://img.anyjava.net/upload/${this.props.images[this.state.currentImageIndex].url}`} />
+        { image.mediaType == 'IMAGE' &&
+          <Card.Img as={Image} fluid={true} className="img-fluid" variant="top" src={`https://img.anyjava.net/upload/${this.props.images[this.state.currentImageIndex].url}`} />
+        }
+        { image.mediaType == 'MP4' &&
+          <div>
+            <video width="100%" height="100%" controls >
+              <source src={`https://img.anyjava.net/upload/${image.url}`} type="video/mp4"/>
+            </video>
+          </div>
+        }
+        { image.mediaType == 'YOUTUBE' &&
+          <div className='youtube'>
+            <iframe width="100%" height="100%" src="https://www.youtube.com/embed/5WQT9_jKo2k" ></iframe>
+          </div>
+        }
         <Row md={2}>
           <Col style={{ textAlign: "right" }}>
             {this.hasLeftButton() &&
