@@ -55,7 +55,7 @@ class ImageView extends React.Component<ImagesProps, ImagesState> {
         }
         { image.mediaType == 'MP4' &&
           <div>
-            <video width="100%" height="100%" controls autoPlay>
+            <video width="100%" height="100%" controls autoPlay loop>
               <source src={`https://img.anyjava.net/upload/${image.url}`} type="video/mp4" />
             </video>
           </div>
